@@ -1,0 +1,34 @@
+{
+    "model": [
+        {
+            "model_type": "stereo",
+            "model_path": "/home/sunrise/workspace/src/vision_algorithm/assets/weight/stereo/V22_disp96.bin",
+            "input_size": [
+                352,
+                640
+            ]
+        },
+        {
+            "model_type": "yolo",
+            "model_path": "/home/sunrise/workspace/src/vision_algorithm/assets/weight/coco/yolo11n.bin",
+            "input_size": [
+                640,
+                640
+            ],
+            "nms_top_k": 300,
+            "conf_thresh": 0.5,
+            "iou_thresh": 0.7,
+            "reg": 16
+        }
+    ],
+    "detect-object": {
+        "trash": {
+            "obj_type": 100,
+            "depth": "center"
+        },
+        "car": {
+            "obj_type": 100,
+            "depth": "bottom"
+        }
+    }
+}

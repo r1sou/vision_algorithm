@@ -1,0 +1,66 @@
+{
+    "camera": [
+        {
+            "camera_name": "dual_camera",
+            "camera_type": "dual",
+            "topic": {
+                "topic1": "/image_left_raw",
+                "topic2": "/image_right_raw"
+            },
+            "params": {
+                "calibration": {
+                    "fx": 0.0,
+                    "fy": 0.0,
+                    "cx": 0.0,
+                    "cy": 0.0,
+                    "baseline": 0.0
+                },
+                "angle": {
+                    "Roll": 0.0,
+                    "Pitch": 0.0,
+                    "Yaw": 0.0
+                },
+                "offset": {
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0
+                }
+            },
+            "task": {
+                "yolo": "",
+                "stereo": ""
+            }
+        },
+        {
+            "camera_name": "ascamera_depth_camera",
+            "camera_type": "depth",
+            "topic": {
+                "topic1": "/ascamera/camera_publisher/rgb0/image",
+                "topic2": "/ascamera/camera_publisher/depth0/image_raw"
+            },
+            "params": {
+                "calibration": {
+                    "fx": 0.0,
+                    "fy": 0.0,
+                    "cx": 0.0,
+                    "cy": 0.0,
+                    "baseline": 0.0
+                },
+                "angle": {
+                    "Roll": 0.0,
+                    "Pitch": 0.0,
+                    "Yaw": 0.0
+                },
+                "offset": {
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0
+                }
+            },
+            "task": {
+                "yolo": "",
+                "stereo": ""
+            }
+        }
+    ]
+}
