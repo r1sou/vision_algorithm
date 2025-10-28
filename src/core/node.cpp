@@ -33,7 +33,9 @@ void NodeManage::InitNode()
     {
         auto sub_node = std::make_shared<SubNode>(
             cfg["camera_name"].get<std::string>(),
-            cfg["camera_type"].get<std::string>());
+            cfg["camera_type"].get<std::string>(),
+            cfg
+        );
         sub_node->InitNode(
             cfg["topic"]["topic1"].get<std::string>(),
             cfg["topic"]["topic2"].get<std::string>());

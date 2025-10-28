@@ -6,6 +6,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include <cv_bridge/cv_bridge.h>
 
 #include <message_filters/subscriber.h>
@@ -28,7 +29,7 @@ struct ImageMsgDetail
 class SubNode : public rclcpp::Node
 {
 public:
-    SubNode(std::string node_name, std::string camera_type) : Node(node_name), camera_type(camera_type)
+    SubNode(std::string node_name, std::string camera_type, nlohmann::json config) : Node(node_name), camera_type(camera_type), config(config)
     {
     }
     ~SubNode() = default;
@@ -45,7 +46,8 @@ public:
 
     std::shared_ptr<BufferData> Read();
 
-private:
+public:
+    nlohmann::json config;
     TripletBuffer<ImageMsg::SharedPtr> buffer_;
     std::shared_ptr<message_filters::Subscriber<ImageMsg>> sub1_;
     std::shared_ptr<message_filters::Subscriber<ImageMsg>> sub2_;

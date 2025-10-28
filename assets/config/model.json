@@ -10,10 +10,13 @@
         },
         {
             "model_type": "yolo",
-            "model_path": "/home/sunrise/workspace/src/vision_algorithm/assets/weight/coco/yolo11n.bin",
+            "model_path": "/home/sunrise/workspace/src/vision_algorithm/assets/weight/trash/trash.bin",
             "input_size": [
                 640,
                 640
+            ],
+            "class_names": [
+                "trash"
             ],
             "nms_top_k": 300,
             "conf_thresh": 0.5,
@@ -24,11 +27,8 @@
     "detect-object": {
         "trash": {
             "obj_type": 100,
+            "obj_code": 88,
             "depth": "center"
-        },
-        "car": {
-            "obj_type": 100,
-            "depth": "bottom"
         }
     }
 }

@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <limits>
+#include <cmath>
 
 #include <vector>
 #include <map>
