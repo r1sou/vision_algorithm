@@ -14,6 +14,10 @@ public:
 
         std::string config_file = CONFIG;
         loadJson(config_file,config);
+
+        if(config["config"]["save_image"].get<bool>()){
+            createDir(config["config"]["save_dir"].get<std::string>());
+        }
     }
     ~Engine()
     {

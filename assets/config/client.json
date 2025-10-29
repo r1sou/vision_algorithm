@@ -1,14 +1,14 @@
 {
     "websocket": {
         "d": "send object message",
-        "ip": "192.168.10.100",
+        "ip": "192.168.1.119",
         "key": "kokobots56461993",
         "req_id": "0001",
         "port": "29701"
     },
     "UDP": {
         "d": "send LaserScan message",
-        "ip": "192.168.10.100",
+        "ip": "192.168.1.119",
         "port": 29703
     }
 }

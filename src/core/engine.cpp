@@ -173,14 +173,6 @@ void Engine::InferenceParallel(int index, bool publish)
             }
         }
     }
-    {
-        if (config["config"]["save_image"].get<bool>())
-        {
-            time_t timestamp = time(NULL);
-            cv::imwrite(
-                fmt::format("{}_{}.jpg", node_m->sub_nodes_[index]->config["camera_name"], timestamp), data->images[0]);
-        }
-    }
 }
 
 void Engine::PublishObject(const std::shared_ptr<ModelOutput> &output, int index)

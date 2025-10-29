@@ -105,7 +105,7 @@ std::shared_ptr<ImageMsgDetail> NodeManage::ReadImageByIndex(int index)
     return data;
 }
 
-void NodeManage::Display()
+void NodeManage::Display(bool save,std::string save_dir)
 {
     for (int i = 0; i < sub_nodes_.size(); i++)
     {
@@ -117,6 +117,13 @@ void NodeManage::Display()
                 cv::Mat combine;
                 cv::hconcat(data->images[0], data->images[1], combine);
                 cv::imshow(fmt::format("camera {}", i), combine);
+
+                if(save){
+                    time_t timestamp = time(NULL);
+                    std::string file_name = fmt::format("{}_{}.jpg",sub_nodes_[index]->config["camera_name"].get<std::string>(),timestamp);
+                    std::string file_path = save_dir + file_name;
+                    cv::imwrite(file_path,data->images[0]);
+                }
             }
             else
             {
