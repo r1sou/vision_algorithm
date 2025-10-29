@@ -127,7 +127,7 @@ void NodeManage::Display(bool save, std::string save_dir)
             if (save)
             {
                 time_t timestamp = time(NULL);
-                std::string file_name = fmt::format("{}_{}.jpg", sub_nodes_[index]->config["camera_name"].get<std::string>(), timestamp);
+                std::string file_name = fmt::format("{}_{}.jpg", sub_nodes_[i]->config["camera_name"].get<std::string>(), timestamp);
                 std::string file_path = save_dir + file_name;
                 cv::imwrite(file_path, data->images[0]);
             }
