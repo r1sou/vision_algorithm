@@ -142,8 +142,9 @@ void Engine::InferenceParallel(int index, bool publish)
         if (output->points.size())
         {
             cv::Mat colormap, combine;
-            ImageRender::DepthToColorMap(output->points, data->images[0].rows, data->images[0].cols, colormap);
-            cv::hconcat(data->images[0], colormap, combine);
+            // ImageRender::DepthToColorMap(output->points, data->images[0].rows, data->images[0].cols, colormap);
+            ImageRender::DisparityToColorMap(output->points,colormap,data->images[0].rows, data->images[0].cols);
+            cv::vconcat(data->images[0], colormap, combine);
             cv::imshow(fmt::format("image {}", index), combine);
         }
         else
@@ -388,7 +389,7 @@ void Engine::InferenceSerial(int index)
         {
             cv::Mat colormap, combine;
             ImageRender::DepthToColorMap(output.points, data->images[0].rows, data->images[0].cols, colormap);
-            cv::hconcat(data->images[0], colormap, combine);
+            cv::vconcat(data->images[0], colormap, combine);
             cv::imshow("image", combine);
         }
         else

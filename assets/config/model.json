@@ -2,7 +2,7 @@
     "model": [
         {
             "model_type": "stereo",
-            "model_path": "/home/sunrise/workspace/src/vision_algorithm/assets/weight/stereo/V22_disp96.bin",
+            "model_path": "/home/sunrise/workspace/src/vision_algorithm/assets/weight/stereo/DStereoV2.4.0_int8.bin",
             "input_size": [
                 352,
                 640

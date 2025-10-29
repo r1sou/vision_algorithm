@@ -114,14 +114,14 @@ void NodeManage::Display(bool save, std::string save_dir)
             if (sub_nodes_[i]->camera_type == "dual")
             {
                 cv::Mat combine;
-                cv::hconcat(data->images[0], data->images[1], combine);
+                cv::vconcat(data->images[0], data->images[1], combine);
                 cv::imshow(fmt::format("camera {}", i), combine);
             }
             else
             {
                 cv::Mat combine, colormap;
                 ImageRender::DepthToColorMap(data->images[1], colormap);
-                cv::hconcat(data->images[0], colormap, combine);
+                cv::vconcat(data->images[0], colormap, combine);
                 cv::imshow(fmt::format("camera {}", i), combine);
             }
             if (save)
