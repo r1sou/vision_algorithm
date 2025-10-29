@@ -34,8 +34,7 @@ void NodeManage::InitNode()
         auto sub_node = std::make_shared<SubNode>(
             cfg["camera_name"].get<std::string>(),
             cfg["camera_type"].get<std::string>(),
-            cfg
-        );
+            cfg);
         sub_node->InitNode(
             cfg["topic"]["topic1"].get<std::string>(),
             cfg["topic"]["topic2"].get<std::string>());
@@ -105,7 +104,7 @@ std::shared_ptr<ImageMsgDetail> NodeManage::ReadImageByIndex(int index)
     return data;
 }
 
-void NodeManage::Display(bool save,std::string save_dir)
+void NodeManage::Display(bool save, std::string save_dir)
 {
     for (int i = 0; i < sub_nodes_.size(); i++)
     {
@@ -117,13 +116,6 @@ void NodeManage::Display(bool save,std::string save_dir)
                 cv::Mat combine;
                 cv::hconcat(data->images[0], data->images[1], combine);
                 cv::imshow(fmt::format("camera {}", i), combine);
-
-                if(save){
-                    time_t timestamp = time(NULL);
-                    std::string file_name = fmt::format("{}_{}.jpg",sub_nodes_[index]->config["camera_name"].get<std::string>(),timestamp);
-                    std::string file_path = save_dir + file_name;
-                    cv::imwrite(file_path,data->images[0]);
-                }
             }
             else
             {
@@ -131,6 +123,13 @@ void NodeManage::Display(bool save,std::string save_dir)
                 ImageRender::DepthToColorMap(data->images[1], colormap);
                 cv::hconcat(data->images[0], colormap, combine);
                 cv::imshow(fmt::format("camera {}", i), combine);
+            }
+            if (save)
+            {
+                time_t timestamp = time(NULL);
+                std::string file_name = fmt::format("{}_{}.jpg", sub_nodes_[index]->config["camera_name"].get<std::string>(), timestamp);
+                std::string file_path = save_dir + file_name;
+                cv::imwrite(file_path, data->images[0]);
             }
         }
     }

@@ -71,7 +71,7 @@ public:
     void InitNode();
     void Start();
     std::shared_ptr<ImageMsgDetail> ReadImageByIndex(int index);
-    void Display();
+    void Display(bool save = false, std::string save_dir = "");
 
 public:
     nlohmann::json config;
