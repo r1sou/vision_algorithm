@@ -6,7 +6,7 @@
         "req_id": "0001",
         "port": "29701"
     },
-    "UPD": {
+    "UDP": {
         "d": "send LaserScan message",
         "ip": "192.168.10.100",
         "port": 29703

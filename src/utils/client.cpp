@@ -149,26 +149,23 @@ std::string JWTGenerator::base64url_encode(const unsigned char *data, size_t len
     return output;
 }
 
-UDPClient::UDPClient(const std::string ip, uint16_t port):sockfd_(-1), valid_(false){
-    sockfd_ = socket(AF_INET, SOCK_DGRAM, 0);
-    std::memset(&dest_addr_, 0, sizeof(dest_addr_));
-    dest_addr_.sin_family = AF_INET;
-    dest_addr_.sin_port = htons(port);
+UDPClient::UDPClient(const std::string ip, uint16_t port):sockfd(-1){
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    if (inet_pton(AF_INET, ip.c_str(), &dest_addr_.sin_addr) <= 0){
-        std::cerr<< "[UDP] invalid IP address" <<std::endl;
-        close(sockfd_);
-        sockfd_ = -1;
-    }
-    valid_ = true;
+    std::memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 }
 
-UDPClient::SendMsg(const std::string message){
-    return send(message.data(), message.size());
+void UDPClient::SendMsg(const std::string message){
+    if(sockfd >= 0){
+        sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    }
 }
 
 UDPClient::~UDPClient() {
-    if (sockfd_ >= 0) {
-        close(sockfd_);
+    if (sockfd >= 0) {
+        close(sockfd);
     }
 }

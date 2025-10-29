@@ -56,7 +56,6 @@ public:
     void SendMsg(const std::string message);
 
 public:
-    int sockfd_;
-    struct sockaddr_in dest_addr_;
-    bool valid_;
+    int sockfd;
+    struct sockaddr_in server_addr;
 };

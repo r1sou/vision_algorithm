@@ -36,20 +36,17 @@ bool Engine::InitClient(nlohmann::json config, int n_pool)
         auto websocket_config = config["websocket"];
         client_object = std::make_shared<WebSocketClient>(websocket_config);
         std::string uri = fmt::format(
-            "ws://{}:{}", websocket_config["ip"].get<std::string>(), websocket_config["port"]["object"].get<std::string>());
+            "ws://{}:{}", websocket_config["ip"].get<std::string>(), websocket_config["port"].get<std::string>());
         if (!client_object->Connect(uri))
         {
             return false;
         }
     }
     {
-        auto udp_config = config["UPD"];
+        auto udp_config = config["UDP"];
         std::string ip = udp_config["ip"].get<std::string>();
         uint16_t port = udp_config["port"].get<uint16_t>();
         client_laser = std::make_shared<UDPClient>(ip,port);
-        if(!client_laser->valid_){
-            return false;
-        }
     }
     return true;
 }
