@@ -1,0 +1,6 @@
+{
+    "config":{
+        "save_image": true,
+        "save_dir": "/home/sunrise/Desktop/dataset/"
+    }
+}

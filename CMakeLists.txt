@@ -39,6 +39,8 @@ include_directories(
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/assets/3rdparty/dnn/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/assets/3rdparty/dnn/lib)
 
+add_definitions(-DCONFIG="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/config.json")
+
 add_definitions(-DCAMERA="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/camera.json")
 add_definitions(-DMODEL="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/model.json")
 add_definitions(-DCLIENT="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/client.json")

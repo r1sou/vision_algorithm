@@ -46,7 +46,7 @@ bool Engine::InitClient(nlohmann::json config, int n_pool)
         auto udp_config = config["UDP"];
         std::string ip = udp_config["ip"].get<std::string>();
         uint16_t port = udp_config["port"].get<uint16_t>();
-        client_laser = std::make_shared<UDPClient>(ip,port);
+        client_laser = std::make_shared<UDPClient>(ip, port);
     }
     return true;
 }
@@ -58,6 +58,7 @@ void Engine::InferenceParallel(int index, bool publish)
     {
         return;
     }
+
     auto now = std::chrono::system_clock::now();
     int64_t start_time = std::chrono::duration_cast<std::chrono::milliseconds>(
                              now.time_since_epoch())
@@ -170,6 +171,14 @@ void Engine::InferenceParallel(int index, bool publish)
                         PublishLaserScan(output, index);
                     });
             }
+        }
+    }
+    {
+        if (config["config"]["save_image"].get<bool>())
+        {
+            time_t timestamp = time(NULL);
+            cv::imwrite(
+                fmt::format("{}_{}.jpg", node_m->sub_nodes_[index]->config["camera_name"], timestamp), data->images[0]);
         }
     }
 }

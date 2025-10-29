@@ -11,6 +11,9 @@ public:
     {
         preprocess_pool.init(2);
         postprocess_pool.init(2);
+
+        std::string config_file = CONFIG;
+        loadJson(config_file,config);
     }
     ~Engine()
     {
@@ -37,6 +40,7 @@ public:
     void InferenceSerial(int index = 0);
 
 public:
+    nlohmann::json config;
     nlohmann::json detect_config;
     std::unordered_set<std::string> need_detect_object_names;
 
