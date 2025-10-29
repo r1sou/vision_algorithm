@@ -1,4 +1,4 @@
-#include "utils/websocket.h"
+#include "utils/client.h"
 
 WebSocketClient::WebSocketClient(nlohmann::json config, int pool)
 {
@@ -147,4 +147,28 @@ std::string JWTGenerator::base64url_encode(const unsigned char *data, size_t len
 
     BIO_free_all(bio);
     return output;
+}
+
+UDPClient::UDPClient(const std::string ip, uint16_t port):sockfd_(-1), valid_(false){
+    sockfd_ = socket(AF_INET, SOCK_DGRAM, 0);
+    std::memset(&dest_addr_, 0, sizeof(dest_addr_));
+    dest_addr_.sin_family = AF_INET;
+    dest_addr_.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip.c_str(), &dest_addr_.sin_addr) <= 0){
+        std::cerr<< "[UDP] invalid IP address" <<std::endl;
+        close(sockfd_);
+        sockfd_ = -1;
+    }
+    valid_ = true;
+}
+
+UDPClient::SendMsg(const std::string message){
+    return send(message.data(), message.size());
+}
+
+UDPClient::~UDPClient() {
+    if (sockfd_ >= 0) {
+        close(sockfd_);
+    }
 }

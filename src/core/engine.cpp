@@ -32,29 +32,25 @@ bool Engine::InitClient(nlohmann::json config, int n_pool)
 {
     publish_pool.init(n_pool);
 
-    client_object = std::make_shared<WebSocketClient>(config);
-    client_laser = std::make_shared<WebSocketClient>(config);
-
-    if (config["client"]["port"].contains("object"))
     {
+        auto websocket_config = config["websocket"];
+        client_object = std::make_shared<WebSocketClient>(websocket_config);
         std::string uri = fmt::format(
-            "ws://{}:{}", config["client"]["ip"].get<std::string>(), config["client"]["port"]["object"].get<std::string>());
+            "ws://{}:{}", websocket_config["ip"].get<std::string>(), websocket_config["port"]["object"].get<std::string>());
         if (!client_object->Connect(uri))
         {
             return false;
         }
     }
-
-    if (config["client"]["port"].contains("laser"))
     {
-        std::string uri = fmt::format(
-            "ws://{}:{}", config["client"]["ip"].get<std::string>(), config["client"]["port"]["laser"].get<std::string>());
-        if (!client_laser->Connect(uri))
-        {
+        auto udp_config = config["UPD"];
+        std::string ip = udp_config["ip"].get<std::string>();
+        uint16_t port = udp_config["port"].get<uint16_t>();
+        client_laser = std::make_shared<UDPClient>(ip,port);
+        if(!client_laser->valid_){
             return false;
         }
     }
-
     return true;
 }
 
@@ -199,8 +195,8 @@ void Engine::PublishObject(const std::shared_ptr<ModelOutput> &output, int index
 
     message["time_stamp"] = timestamp;
     message["key"] = JWTGenerator::generate(
-        client_object->m_config["client"]["req_id"],
-        client_object->m_config["client"]["key"]);
+        client_object->m_config["req_id"],
+        client_object->m_config["key"]);
     {
         auto json = nlohmann::json::array();
         for (int i = 0; i < output->bboxes.size(); i++)

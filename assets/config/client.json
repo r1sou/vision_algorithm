@@ -1,11 +1,14 @@
-{   
-    "client": {
+{
+    "websocket": {
+        "d": "send object message",
         "ip": "192.168.10.100",
         "key": "kokobots56461993",
         "req_id": "0001",
-        "port": {
-            "object": "29701",
-            "laser": "29703"
-        }
+        "port": "29701"
+    },
+    "UPD": {
+        "d": "send LaserScan message",
+        "ip": "192.168.10.100",
+        "port": 29703
     }
 }

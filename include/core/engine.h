@@ -2,7 +2,7 @@
 
 #include "core/model.h"
 #include "core/node.h"
-#include "utils/websocket.h"
+#include "utils/client.h"
 
 class Engine
 {
@@ -42,7 +42,7 @@ public:
 
 private:
     std::shared_ptr<WebSocketClient> client_object;
-    std::shared_ptr<WebSocketClient> client_laser;
+    std::shared_ptr<UDPClient> client_laser;
 
     hbPackedDNNHandle_t packed_dnn_handle;
 

@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <limits>
 #include <cmath>
+#include <cstring>
+#include <cerrno>
 
 #include <vector>
 #include <map>

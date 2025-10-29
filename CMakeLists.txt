@@ -73,12 +73,12 @@ endfunction()
 #     src/main.cpp
 # )
 
-# add_vision_executable(test_camera
-#     src/utils/file.cpp
-#     src/utils/imgproc.cpp
-#     src/core/node.cpp
-#     src/test/test_camera.cpp
-# )
+add_vision_executable(test_camera
+    src/utils/file.cpp
+    src/utils/imgproc.cpp
+    src/core/node.cpp
+    src/test/test_camera.cpp
+)
 
 # add_vision_executable(test_model
 #     src/utils/file.cpp
@@ -92,7 +92,7 @@ endfunction()
 add_vision_executable(test_model_publish
     src/utils/file.cpp
     src/utils/imgproc.cpp
-    src/utils/websocket.cpp
+    src/utils/client.cpp
     src/core/node.cpp
     src/core/model.cpp
     src/core/engine.cpp
