@@ -136,14 +136,27 @@ void Engine::InferenceParallel(int index, bool publish)
                      ansi_colors["green"], start_time, ansi_colors["reset"],
                      ansi_colors["green"], finish_time, ansi_colors["reset"])
               << std::endl;
-
+    {
+        if (config["config"]["save_image"].get<bool>())
+        {
+            std::string save_dir = config["config"]["save_dir"].get<std::string>();
+            time_t timestamp = time(NULL);
+            std::string file_name = fmt::format(
+                "{}_{}.jpg", 
+                node_m->sub_nodes_[index]->config["camera_name"].get<std::string>(), 
+                timestamp
+            );
+            std::string file_path = save_dir + file_name;
+            cv::imwrite(file_path, data->images[0]);
+        }
+    }
     {
         ImageRender::DrawBox(data->images[0], output->bboxes, output->names);
         if (output->points.size())
         {
             cv::Mat colormap, combine;
             // ImageRender::DepthToColorMap(output->points, data->images[0].rows, data->images[0].cols, colormap);
-            ImageRender::DisparityToColorMap(output->points,colormap,data->images[0].rows, data->images[0].cols);
+            ImageRender::DisparityToColorMap(output->points, colormap, data->images[0].rows, data->images[0].cols);
             cv::vconcat(data->images[0], colormap, combine);
             cv::imshow(fmt::format("image {}", index), combine);
         }

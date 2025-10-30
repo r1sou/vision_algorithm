@@ -81,7 +81,6 @@ void ImageProc::MinMaxNormalize(cv::Mat &src, cv::Mat &dst)
     dst = (src - minVal) / (maxVal - minVal);
 }
 
-#ifdef __aarch64__
 void ImageProc::BGR2NV12_neon(uint8_t *src, uint8_t *dst, int width, int height)
 {
     int frameSize = width * height;
@@ -174,9 +173,7 @@ void ImageProc::BGR2NV12_neon(uint8_t *src, uint8_t *dst, int width, int height)
         }
     }
 }
-#endif
 
-#ifdef __aarch64__
 void ImageProc::BGR2NV12(cv::Mat &src, cv::Mat &dst)
 {
     int width = src.cols;
@@ -184,7 +181,25 @@ void ImageProc::BGR2NV12(cv::Mat &src, cv::Mat &dst)
     dst = cv::Mat(height * 3 / 2, width, CV_8UC1);
     BGR2NV12_neon(src.data, dst.data, width, height);
 }
-#endif
+
+void ImageProc::DisparityToDepth(std::vector<float> &points, cv::Mat &depth, int H, int W, float camera_fx, float baseline)
+{
+    depth = cv::Mat(H, W, CV_16UC1);
+    uint16_t *depth_data = (uint16_t *)depth.data;
+    float factor = 1000 * (camera_fx * baseline);
+    uint32_t num_pixels = points.size();
+
+    float32x4_t zero_vec = vdupq_n_f32(0.f);
+    float32x4_t factor_vector = vdupq_n_f32(factor);
+    for (uint32_t i = 0; i < num_pixels; i += 4)
+    {
+        float32x4_t points_vec = vld1q_f32(&points[i]);
+        uint32x4_t mask = vcgtq_f32(points_vec, zero_vec);
+        float32x4_t depth_vec = vdivq_f32(factor_vector, points_vec);
+        uint16x4_t depth_int16_vec = vmovn_u32(vcvtq_u32_f32(vbslq_f32(mask, depth_vec, zero_vec)));
+        vst1_u16(&depth_data[i], depth_int16_vec);
+    }
+}
 
 void ImageRender::DrawBox(cv::Mat &img, std::vector<float> &box, std::string &label)
 {
@@ -201,7 +216,7 @@ void ImageRender::DrawBox(cv::Mat &img, std::vector<std::vector<float>> &boxes, 
     }
 }
 
-void ImageRender::DepthToColorMap(std::vector<float> &depth, int H, int W, cv::Mat &color_map,bool smooth_for_visualization)
+void ImageRender::DepthToColorMap(std::vector<float> &depth, int H, int W, cv::Mat &color_map, bool smooth_for_visualization)
 {
     cv::Mat grayMat(H, W, CV_32F, const_cast<float *>(depth.data()), W * sizeof(float));
     cv::Mat normalized;
@@ -215,4 +230,11 @@ void ImageRender::DepthToColorMap(cv::Mat &depth, cv::Mat &color_map)
     cv::Mat depth_nomallize;
     cv::normalize(depth, depth_nomallize, 0, 255, cv::NORM_MINMAX, CV_8UC1);
     cv::applyColorMap(depth_nomallize, color_map, cv::COLORMAP_JET);
+}
+
+void ImageRender::DisparityToColorMap(std::vector<float> &points, cv::Mat &colormap, int H, int W)
+{
+    cv::Mat disp_mat(H, W, CV_32FC1, const_cast<float *>(points.data()));
+    disp_mat.convertTo(colormap, CV_8UC1, 3, 0);
+    cv::applyColorMap(colormap, colormap, cv::COLORMAP_JET);
 }
