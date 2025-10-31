@@ -142,12 +142,33 @@ void Engine::InferenceParallel(int index, bool publish)
             std::string save_dir = config["config"]["save_dir"].get<std::string>();
             time_t timestamp = time(NULL);
             std::string file_name = fmt::format(
-                "{}_{}.jpg", 
-                node_m->sub_nodes_[index]->config["camera_name"].get<std::string>(), 
-                timestamp
-            );
+                "{}_{}.jpg",
+                node_m->sub_nodes_[index]->config["camera_name"].get<std::string>(),
+                timestamp);
             std::string file_path = save_dir + file_name;
             cv::imwrite(file_path, data->images[0]);
+        }
+    }
+    {
+        if (publish)
+        {
+            if (client_object)
+            {
+                publish_pool.enqueue(
+                    [this, output, index]()
+                    {
+                        PublishObject(output, index);
+                    });
+            }
+            if (client_laser)
+            {
+                cv::Mat image = data->images[0].clone();
+                publish_pool.enqueue(
+                    [this, output, index, image]()
+                    {
+                        PublishPointCloud(output, image, index);
+                    });
+            }
         }
     }
     {
@@ -165,27 +186,6 @@ void Engine::InferenceParallel(int index, bool publish)
             cv::imshow(fmt::format("image {}", index), data->images[0]);
         }
         cv::waitKey(1);
-    }
-    {
-        if (publish)
-        {
-            if (client_object)
-            {
-                publish_pool.enqueue(
-                    [this, output, index]()
-                    {
-                        PublishObject(output, index);
-                    });
-            }
-            if (client_laser)
-            {
-                publish_pool.enqueue(
-                    [this, output, index]()
-                    {
-                        PublishLaserScan(output, index);
-                    });
-            }
-        }
     }
 }
 
@@ -264,16 +264,14 @@ void Engine::PublishObject(const std::shared_ptr<ModelOutput> &output, int index
     client_object->SendMsg(message.dump());
 }
 
-void Engine::PublishLaserScan(const std::shared_ptr<ModelOutput> &output, int index)
+void Engine::PublishPointCloud(const std::shared_ptr<ModelOutput> &output, const cv::Mat &rgb, int index)
 {
-    // 目前不考虑旋转相机 TODO
-    nlohmann::json &camera_config = node_m->sub_nodes_[index]->config;
-    nlohmann::json message;
+    if (output->points.size() == 0)
+    {
+        return;
+    }
 
-    message["cmd_code"] = 0x01;
-    message["device_id"] = camera_config["device_id"].get<int>();
-    time_t timestamp = time(NULL);
-    message["time_stamp"] = timestamp;
+    nlohmann::json &camera_config = node_m->sub_nodes_[index]->config;
 
     int H = camera_config["shape"]["H"].get<int>();
     int W = camera_config["shape"]["W"].get<int>();
@@ -284,56 +282,150 @@ void Engine::PublishLaserScan(const std::shared_ptr<ModelOutput> &output, int in
     float cy = camera_config["params"]["calibration"]["cy"].get<float>();
     float baseline = camera_config["params"]["calibration"]["baseline"].get<float>();
 
-    float offsetX = camera_config["params"]["offset"]["X"].get<float>();
-    float offsetY = camera_config["params"]["offset"]["Y"].get<float>();
-    float offsetZ = camera_config["params"]["offset"]["Z"].get<float>();
+    auto pcl_msg = std::make_unique<sensor_msgs::msg::PointCloud2>(
+        rosidl_runtime_cpp::MessageInitialization::SKIP);
+    sensor_msgs::msg::PointCloud2 &point_cloud_msg = *pcl_msg;
 
-    LaserScan scan;
-    for (int row = 0; row < H; row++)
+    point_cloud_msg.header.stamp = pub_cloud_node->now();
+    point_cloud_msg.header.frame_id = "camera_link";
+    point_cloud_msg.is_dense = false;
+    point_cloud_msg.fields.resize(4);
+    point_cloud_msg.fields[0].name = "x";
+    point_cloud_msg.fields[0].offset = 0;
+    point_cloud_msg.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    point_cloud_msg.fields[0].count = 1;
+    point_cloud_msg.fields[1].name = "y";
+    point_cloud_msg.fields[1].offset = 4;
+    point_cloud_msg.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    point_cloud_msg.fields[1].count = 1;
+    point_cloud_msg.fields[2].name = "z";
+    point_cloud_msg.fields[2].offset = 8;
+    point_cloud_msg.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    point_cloud_msg.fields[2].count = 1;
+    point_cloud_msg.fields[3].name = "rgb";
+    point_cloud_msg.fields[3].offset = 12;
+    point_cloud_msg.fields[3].datatype = sensor_msgs::msg::PointField::UINT32;
+    point_cloud_msg.fields[3].count = 1;
+
+    point_cloud_msg.height = 1;
+    point_cloud_msg.point_step = 16;
+
+    int down_sample_ratio = config["config"]["down_sample_ratio"].get<int>();
+
+    point_cloud_msg.data.resize((640 / down_sample_ratio) * (352 / down_sample_ratio) * point_cloud_msg.point_step * point_cloud_msg.height);
+
+    float *pcd_data_ptr = reinterpret_cast<float *>(point_cloud_msg.data.data());
+    uint32_t point_size = 0;
+    for (int y = 0; y < H; y += down_sample_ratio)
     {
-        for (int col = 0; col < W; col++)
+        for (int x = 0; x < W; x += down_sample_ratio)
         {
-            if (output->points[row * W + col] <= 0.0f || output->points[row * W + col] > W)
+            if (output->points[y * W + x] <= 0.0f)
             {
                 continue;
             }
-
-            float Xw = fx * baseline / output->points[row * W + col];
-            float Yw = (cx - col) * Xw / fx;
-            float Zw = (cy - row) * Xw / fy;
-            if ((Zw + offsetZ) > scan.max_height || (Zw + offsetZ) < scan.min_height)
+            float depth = fx * baseline / output->points[y * W + x];
+            if (depth > 5)
             {
                 continue;
             }
-            float range = hypot(Xw, Yw);
-            if (range > scan.range_max || range < scan.range_min)
+            float X = (cx - x) / fx * depth;
+            float Y = (cy - y) / fy * depth;
+            if (Y < -10 || Y > 10)
             {
                 continue;
             }
-            float angle = atan2(Yw, Xw);
-            if (angle > scan.angle_max || angle < scan.angle_min)
-            {
-                continue;
-            }
-
-            int index = (angle - scan.angle_min) / scan.angle_increment;
-            if (range < scan.ranges[index])
-            {
-                scan.ranges[index] = range;
-            }
+            *pcd_data_ptr++ = depth;
+            *pcd_data_ptr++ = X;
+            *pcd_data_ptr++ = Y;
+            cv::Vec3b pixel = rgb.at<cv::Vec3b>(y, x);
+            *(uint32_t *)pcd_data_ptr++ = (pixel[2] << 16) | (pixel[1] << 8) | (pixel[0] << 0);
+            point_size++;
         }
     }
+    point_cloud_msg.width = point_size;
+    point_cloud_msg.row_step = point_cloud_msg.point_step * point_cloud_msg.width;
+    point_cloud_msg.data.resize(point_size * point_cloud_msg.point_step *
+                                point_cloud_msg.height);
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    auto scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+    scan_msg->header = pcl_msg->header;
+
+    scan_msg->angle_min = pub_laser_node->angle_min_;
+    scan_msg->angle_max = pub_laser_node->angle_max_;
+    scan_msg->angle_increment = pub_laser_node->angle_increment_;
+    scan_msg->time_increment = 0.0;
+    scan_msg->scan_time = pub_laser_node->scan_time_;
+    scan_msg->range_min = pub_laser_node->range_min_;
+    scan_msg->range_max = pub_laser_node->range_max_;
+
+    uint32_t ranges_size = std::ceil(
+        (scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
+    if (pub_laser_node->use_inf_)
+    {
+        scan_msg->ranges.assign(ranges_size, std::numeric_limits<double>::infinity());
+    }
+    else
+    {
+        scan_msg->ranges.assign(ranges_size, scan_msg->range_max + pub_laser_node->inf_epsilon_);
+    }
+    for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(*pcl_msg, "x"),
+         iter_y(*pcl_msg, "y"), iter_z(*pcl_msg, "z");
+         iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
+    {
+        if (std::isnan(*iter_x) || std::isnan(*iter_y) || std::isnan(*iter_z))
+        {
+            continue;
+        }
+
+        if (*iter_z > pub_laser_node->max_height_ || *iter_z < pub_laser_node->min_height_)
+        {
+            continue;
+        }
+
+        double range = hypot(*iter_x, *iter_y);
+        if (range < pub_laser_node->range_min_ || range > pub_laser_node->range_max_)
+        {
+            continue;
+        }
+        double angle = atan2(*iter_y, *iter_x);
+        if (angle < scan_msg->angle_min || angle > scan_msg->angle_max)
+        {
+            continue;
+        }
+
+        int index_ = (angle - scan_msg->angle_min) / scan_msg->angle_increment;
+        if (range < scan_msg->ranges[index_])
+        {
+            scan_msg->ranges[index_] = range;
+        }
+    }
+
+    nlohmann::json message;
+
+    message["cmd_code"] = 0x01;
+    message["device_id"] = camera_config["device_id"].get<int>();
+    time_t timestamp = time(NULL);
+    message["time_stamp"] = timestamp;
+
     message["data"] = nlohmann::json::object();
-    message["data"]["angle_min"] = scan.angle_min;
-    message["data"]["angle_max"] = scan.angle_max;
-    message["data"]["angle_increment"] = scan.angle_increment;
-    message["data"]["time_increment"] = scan.time_increment;
-    message["data"]["scan_time"] = scan.scan_time;
-    message["data"]["range_min"] = scan.range_min;
-    message["data"]["range_max"] = scan.range_max;
-    message["data"]["ranges"] = scan.ranges;
+    message["data"]["angle_min"] = scan_msg->angle_min;
+    message["data"]["angle_max"] = scan_msg->angle_max;
+    message["data"]["angle_increment"] = scan_msg->angle_increment;
+    message["data"]["time_increment"] = scan_msg->time_increment;
+    message["data"]["scan_time"] = scan_msg->scan_time;
+    message["data"]["range_min"] = scan_msg->range_min;
+    message["data"]["range_max"] = scan_msg->range_max;
+    message["data"]["ranges"] = scan_msg->ranges;
 
     client_laser->SendMsg(message.dump());
+    
+    {
+        pub_cloud_node->pointcloud2_pub_->publish(std::move(pcl_msg));
+    }
+    {
+        pub_laser_node->laserscan_pub_->publish(std::move(scan_msg));
+    }
 }
 
 void Engine::InferenceSerial(int index)

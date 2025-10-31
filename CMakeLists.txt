@@ -23,6 +23,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(message_filters REQUIRED)
@@ -44,7 +47,7 @@ add_definitions(-DCONFIG="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/config.json"
 add_definitions(-DCAMERA="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/camera.json")
 add_definitions(-DMODEL="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/model.json")
 add_definitions(-DCLIENT="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/client.json")
-add_definitions(-DLASERSCAN="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/laserscan.json")
+add_definitions(-DLASER="${CMAKE_CURRENT_SOURCE_DIR}/assets/config/laserscan.json")
 
 function(add_vision_executable target_name)
     add_executable(${target_name} ${ARGN})
@@ -55,6 +58,9 @@ function(add_vision_executable target_name)
         sensor_msgs
         message_filters
         geometry_msgs
+        tf2_ros
+        tf2
+        tf2_sensor_msgs
     )
     target_link_libraries(${target_name}
         ${OpenCV_LIBRARIES}
